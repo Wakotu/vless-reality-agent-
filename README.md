@@ -19,7 +19,7 @@ config generation command
 chmod +x gen-singbox-vless-reality.sh
 ./gen-singbox-vless-reality.sh \
   --server-address <public_ip> \
-  --local-port 21807 \
+  --local-port 23907 \
   --public-port <public_port> \
   --server-name tesla.com
 ```
