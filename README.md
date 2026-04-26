@@ -1,8 +1,22 @@
 # A Script to Generate sing-box config
 
+## Prerequisites
+
+Our command depends on `jq` and `sing-box` to run.
+
+In Alpine Linux, you can install them with the following command:
+
+```bash
+apk add sing-box --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+apk add jq 
+```
+
+## Usage
+
 config generation command
 
 ```bash
+chmod +x gen-singbox-vless-reality.sh
 ./gen-singbox-vless-reality.sh \
   --server-address <public_ip> \
   --local-port 21807 \
