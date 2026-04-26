@@ -8,7 +8,7 @@ In Alpine Linux, you can install them with the following command:
 
 ```bash
 apk add sing-box --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
-apk add jq 
+apk add jq wget bash
 ```
 
 ## Usage
@@ -16,6 +16,7 @@ apk add jq
 config generation command
 
 ```bash
+ wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/gen-singbox-vless-reality.sh
 chmod +x gen-singbox-vless-reality.sh
 ./gen-singbox-vless-reality.sh \
   --server-address <public_ip> \
@@ -27,6 +28,7 @@ chmod +x gen-singbox-vless-reality.sh
 sing-box run command:
 
 ```bash
+sing-box check -c config.json
 nohup sing-box run -c config.json >/tmp/sing-box.log 2>&1 &
 ```
 
