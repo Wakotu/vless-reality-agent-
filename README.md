@@ -23,12 +23,14 @@ chmod +x gen-singbox-vless-reality.sh
   --local-port 23907 \
   --public-port <public_port> \
   --server-name tesla.com
+
+sing-box check -c config.json
 ```
 
 sing-box run command:
 
 ```bash
-sing-box check -c config.json
-nohup sing-box run -c config.json >/tmp/sing-box.log 2>&1 &
+chmod +x setup-sing-box-logrorate.sh
+./setup-sing-box-logrorate.sh config.json
 ```
 
