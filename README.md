@@ -16,7 +16,7 @@ apk add jq wget bash
 config generation command
 
 ```bash
- wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/gen-singbox-vless-reality.sh
+wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/gen-singbox-vless-reality.sh
 chmod +x gen-singbox-vless-reality.sh
 ./gen-singbox-vless-reality.sh \
   --server-address <public_ip> \
@@ -32,6 +32,6 @@ sing-box run command:
 ```bash
 wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/setup-sing-box-logrotate.sh 
 chmod +x setup-sing-box-logrotate.sh
-./setup-sing-box-logrorate.sh config.json
+./setup-sing-box-logrotate.sh config.json
 ```
 
