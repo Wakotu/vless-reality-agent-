@@ -30,6 +30,7 @@ sing-box check -c config.json
 sing-box run command:
 
 ```bash
+wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/setup-sing-box-logrotate.sh 
 chmod +x setup-sing-box-logrorate.sh
 ./setup-sing-box-logrorate.sh config.json
 ```
