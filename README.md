@@ -11,25 +11,23 @@ Non-root users will be prompted for `sudo` when installing packages.
 
 ## Usage
 
-config generation command
+Clone the repository and generate a config:
 
 ```bash
-wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/gen-singbox-vless-reality.sh
-chmod +x gen-singbox-vless-reality.sh
+git clone https://github.com/Wakotu/vless-reality-agent-.git
+cd vless-reality-agent-
+
+# Generate sing-box config
 ./gen-singbox-vless-reality.sh \
   --server-address <ip-or-domain> \
   --local-port 23907 \
   --public-port <public_port> \
   --server-name tesla.com
 
+# Validate
 sing-box check -c config.json
-```
 
-sing-box run command:
-
-```bash
-wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/setup-sing-box-logrotate.sh 
-chmod +x setup-sing-box-logrotate.sh
+# Run with log rotation
 ./setup-sing-box-logrotate.sh config.json
 ```
 
