@@ -118,12 +118,12 @@ install_missing_deps() {
         esac
         echo "==> Retrieving latest sing-box release info..." >&2
         local latest_tag download_url
-        latest_tag="$(wget -qO- "https://api.github.com/repos/SagNet/sing-box/releases/latest" | jq -r '.tag_name')"
+        latest_tag="$(wget -qO- --timeout=15 --tries=2 "https://api.github.com/repos/SagNet/sing-box/releases/latest" | jq -r '.tag_name')"
         download_url="https://github.com/SagNet/sing-box/releases/download/${latest_tag}/sing-box-${latest_tag#v}-linux-${arch}.tar.gz"
         local tmpdir
         tmpdir="$(mktemp -d)"
         echo "==> Downloading sing-box ${latest_tag} for linux/${arch}..." >&2
-        wget -q --show-progress -O "${tmpdir}/sing-box.tar.gz" "$download_url" || {
+        wget -q --show-progress --timeout=60 --tries=3 -O "${tmpdir}/sing-box.tar.gz" "$download_url" || {
           echo "Error: failed to download sing-box from ${download_url}" >&2
           rm -rf "$tmpdir"
           exit 1
