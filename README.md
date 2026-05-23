@@ -56,9 +56,9 @@ If your VPS has a dynamic IP, use the DDNS script to keep a domain pointed to yo
 
 First, install the script and its config to `/usr/local/bin/`:
 ```bash
-sudo cp ddns-update.sh /usr/local/bin/ddns-update.sh
-sudo cp ddns-update.env /usr/local/bin/ddns-update.env
-sudo chmod 600 /usr/local/bin/ddns-update.env
+cp ddns-update.sh /usr/local/bin/ddns-update.sh
+cp ddns-update.env /usr/local/bin/ddns-update.env
+chmod 600 /usr/local/bin/ddns-update.env
 ```
 
 Then add a cron entry to check every 5 minutes:
