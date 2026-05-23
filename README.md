@@ -22,7 +22,8 @@ cd vless-reality-agent-
   --server-address <ip-or-domain> \
   --local-port 23907 \
   --public-port <public_port> \
-  --server-name tesla.com
+  --server-name tesla.com \
+  --node-name "MyNode"
 
 # Validate
 sing-box check -c config.json

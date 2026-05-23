@@ -16,6 +16,7 @@ FLOW="${FLOW:-xtls-rprx-vision}"
 LISTEN_ADDR="${LISTEN_ADDR:-::}"
 OUT_FILE="${OUT_FILE:-config.json}"
 REMARK="${REMARK:-${USER_NAME}-${SERVER_NAME}}"
+NODE_NAME="${NODE_NAME:-${USER_NAME}-${SERVER_NAME}}"
 SHORT_ID_COUNT="${SHORT_ID_COUNT:-1}"
 
 # =========================
@@ -203,6 +204,7 @@ Optional:
   --listen-addr ADDR         Default: ${LISTEN_ADDR}
   --out-file FILE            Output JSON file (default: ${OUT_FILE})
   --remark TEXT              Client URI remark (default: ${REMARK})
+  --node-name NAME           Clash node name (default: ${NODE_NAME})
   --short-id-count N         Number of extra short_ids to generate (default: ${SHORT_ID_COUNT})
 
 Examples:
@@ -263,6 +265,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --remark)
       REMARK="$2"
+      shift 2
+      ;;
+    --node-name)
+      NODE_NAME="$2"
       shift 2
       ;;
     --short-id-count)
@@ -514,5 +520,21 @@ Fingerprint:      chrome
 
 [Client URI]
 ${CLIENT_URI}
+
+[Clash Node]
+    - name: "${NODE_NAME}"
+      type: vless
+      server: ${SERVER_ADDRESS}
+      port: ${PUBLIC_PORT}
+      uuid: ${UUID}
+      udp: true
+      tls: true
+      flow: ${FLOW}
+      servername: ${SERVER_NAME}
+      network: tcp
+      reality-opts:
+        public-key: ${PUBLIC_KEY}
+        short-id: ${SELECTED_SHORT_ID}
+      client-fingerprint: chrome
 
 EOF
