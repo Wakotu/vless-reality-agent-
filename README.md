@@ -17,7 +17,7 @@ config generation command
 wget https://raw.githubusercontent.com/Wakotu/vless-reality-agent-/refs/heads/main/gen-singbox-vless-reality.sh
 chmod +x gen-singbox-vless-reality.sh
 ./gen-singbox-vless-reality.sh \
-  --server-address <public_ip> \
+  --server-address <ip-or-domain> \
   --local-port 23907 \
   --public-port <public_port> \
   --server-name tesla.com
