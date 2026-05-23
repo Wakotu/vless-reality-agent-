@@ -18,6 +18,154 @@ OUT_FILE="${OUT_FILE:-config.json}"
 REMARK="${REMARK:-${USER_NAME}-${SERVER_NAME}}"
 SHORT_ID_COUNT="${SHORT_ID_COUNT:-1}"
 
+# =========================
+# Root detection
+# =========================
+if [[ "$(id -u)" -eq 0 ]]; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
+# =========================
+# OS detection
+# =========================
+if [[ -f /etc/os-release ]]; then
+  . /etc/os-release
+  OS_ID="${ID}"
+else
+  OS_ID="unknown"
+fi
+
+# =========================
+# Dependency installer
+# =========================
+install_missing_deps() {
+  local need_wget=false
+  local need_jq=false
+  local need_singbox=false
+
+  command -v wget >/dev/null 2>&1 || need_wget=true
+  command -v jq >/dev/null 2>&1 || need_jq=true
+  command -v sing-box >/dev/null 2>&1 || need_singbox=true
+
+  if ! $need_wget && ! $need_jq && ! $need_singbox; then
+    return 0
+  fi
+
+  echo "==> Installing missing dependencies for ${OS_ID}..." >&2
+
+  case "$OS_ID" in
+    alpine)
+      local pkgs=()
+      $need_wget && pkgs+=(wget)
+      $need_jq && pkgs+=(jq)
+      if [[ ${#pkgs[@]} -gt 0 ]]; then
+        $SUDO apk add "${pkgs[@]}" || {
+          echo "Error: failed to install: ${pkgs[*]}" >&2
+          exit 1
+        }
+      fi
+      hash -r
+      $need_wget && command -v wget >/dev/null 2>&1 || {
+        echo "Error: wget still not found after install" >&2
+        exit 1
+      }
+      $need_jq && command -v jq >/dev/null 2>&1 || {
+        echo "Error: jq still not found after install" >&2
+        exit 1
+      }
+      if $need_singbox; then
+        $SUDO apk add sing-box --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community || {
+          echo "Error: failed to install sing-box" >&2
+          exit 1
+        }
+        hash -r
+        command -v sing-box >/dev/null 2>&1 || {
+          echo "Error: sing-box still not found after install" >&2
+          exit 1
+        }
+      fi
+      ;;
+    debian|ubuntu)
+      if $need_wget || $need_jq; then
+        $SUDO apt-get update || true
+        local pkgs=()
+        $need_wget && pkgs+=(wget)
+        $need_jq && pkgs+=(jq)
+        $SUDO apt-get install -y "${pkgs[@]}" || {
+          echo "Error: failed to install: ${pkgs[*]}" >&2
+          exit 1
+        }
+        hash -r
+        $need_wget && command -v wget >/dev/null 2>&1 || {
+          echo "Error: wget still not found after install" >&2
+          exit 1
+        }
+        $need_jq && command -v jq >/dev/null 2>&1 || {
+          echo "Error: jq still not found after install" >&2
+          exit 1
+        }
+      fi
+      if $need_singbox; then
+        local arch
+        arch="$(uname -m)"
+        case "$arch" in
+          x86_64)  arch="amd64" ;;
+          aarch64) arch="arm64" ;;
+          armv7l)  arch="armv7" ;;
+          *)       ;;
+        esac
+        echo "==> Retrieving latest sing-box release info..." >&2
+        local latest_tag download_url
+        latest_tag="$(wget -qO- "https://api.github.com/repos/SagNet/sing-box/releases/latest" | jq -r '.tag_name')"
+        download_url="https://github.com/SagNet/sing-box/releases/download/${latest_tag}/sing-box-${latest_tag#v}-linux-${arch}.tar.gz"
+        local tmpdir
+        tmpdir="$(mktemp -d)"
+        echo "==> Downloading sing-box ${latest_tag} for linux/${arch}..." >&2
+        wget -q --show-progress -O "${tmpdir}/sing-box.tar.gz" "$download_url" || {
+          echo "Error: failed to download sing-box from ${download_url}" >&2
+          rm -rf "$tmpdir"
+          exit 1
+        }
+        tar -xzf "${tmpdir}/sing-box.tar.gz" -C "$tmpdir" || {
+          echo "Error: failed to extract sing-box archive" >&2
+          rm -rf "$tmpdir"
+          exit 1
+        }
+        local bin_path
+        bin_path="$(find "${tmpdir}" -type f -name 'sing-box' -executable | head -n1)"
+        if [[ -z "$bin_path" ]]; then
+          echo "Error: could not find sing-box binary in archive" >&2
+          rm -rf "$tmpdir"
+          exit 1
+        fi
+        $SUDO cp "$bin_path" /usr/local/bin/sing-box || {
+          echo "Error: failed to copy sing-box to /usr/local/bin" >&2
+          rm -rf "$tmpdir"
+          exit 1
+        }
+        $SUDO chmod +x /usr/local/bin/sing-box
+        rm -rf "$tmpdir"
+        echo "==> sing-box ${latest_tag} installed to /usr/local/bin/sing-box" >&2
+        hash -r
+        command -v sing-box >/dev/null 2>&1 || {
+          echo "Error: sing-box still not found after install" >&2
+          exit 1
+        }
+      fi
+      ;;
+    *)
+      echo "Warning: automatic dependency installation is not supported for ${OS_ID}" >&2
+      echo "Please install the following manually:" >&2
+      $need_wget && echo "  - wget (https://www.gnu.org/software/wget/)" >&2
+      $need_jq && echo "  - jq (https://jqlang.github.io/jq/)" >&2
+      $need_singbox && echo "  - sing-box (https://github.com/SagNet/sing-box/releases)" >&2
+      exit 1
+      ;;
+  esac
+}
+
 usage() {
   cat <<EOF
 Usage:
@@ -145,15 +293,7 @@ fi
 # =========================
 # Checks
 # =========================
-command -v sing-box >/dev/null 2>&1 || {
-  echo "Error: sing-box not found in PATH" >&2
-  exit 1
-}
-
-command -v jq >/dev/null 2>&1 || {
-  echo "Error: jq not found in PATH" >&2
-  exit 1
-}
+install_missing_deps
 
 is_valid_port() {
   [[ "$1" =~ ^[0-9]+$ ]] && (( "$1" >= 1 && "$1" <= 65535 ))
