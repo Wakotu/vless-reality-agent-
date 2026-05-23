@@ -3,27 +3,61 @@ set -eu
 
 LOG_FILE="/var/log/sing-box.log"
 LOGROTATE_CONF="/etc/logrotate.d/sing-box"
-HOURLY_LOGROTATE="/etc/periodic/hourly/logrotate"
 SING_BOX_CONFIG="${1:-config.json}"
 
-echo "Installing logrotate..."
-apk update
-apk add logrotate
-
-echo "Ensuring crond is running..."
-if command -v rc-service >/dev/null 2>&1; then
-    rc-service crond start || true
-    rc-update add crond || true
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS_ID="${ID}"
 else
-    crond || true
+    OS_ID="unknown"
 fi
 
+case "$OS_ID" in
+    alpine) HOURLY_LOGROTATE="/etc/periodic/hourly/logrotate" ;;
+    *)      HOURLY_LOGROTATE="/etc/cron.hourly/logrotate" ;;
+esac
+
+if [ "$(id -u)" -eq 0 ]; then
+    SUDO=""
+else
+    SUDO="sudo"
+fi
+
+echo "Installing logrotate..."
+case "$OS_ID" in
+    alpine)
+        $SUDO apk update
+        $SUDO apk add logrotate
+        ;;
+    debian|ubuntu)
+        $SUDO apt-get update
+        $SUDO apt-get install -y logrotate cron
+        ;;
+    *)
+        echo "Warning: unknown OS, cannot install logrotate automatically"
+        ;;
+esac
+
+echo "Ensuring cron is running..."
+case "$OS_ID" in
+    alpine)
+        $SUDO rc-service crond start 2>/dev/null || true
+        $SUDO rc-update add crond 2>/dev/null || true
+        ;;
+    debian|ubuntu)
+        $SUDO systemctl enable --now cron 2>/dev/null || true
+        ;;
+    *)
+        echo "Warning: cannot ensure cron is running, skipping"
+        ;;
+esac
+
 echo "Creating sing-box log file..."
-touch "$LOG_FILE"
-chmod 644 "$LOG_FILE"
+$SUDO touch "$LOG_FILE"
+$SUDO chmod 644 "$LOG_FILE"
 
 echo "Writing logrotate config..."
-cat > "$LOGROTATE_CONF" <<EOF
+cat <<EOF | $SUDO tee "$LOGROTATE_CONF" >/dev/null
 $LOG_FILE {
     size 1M
     rotate 2
@@ -35,12 +69,12 @@ $LOG_FILE {
 EOF
 
 echo "Creating hourly logrotate job..."
-cat > "$HOURLY_LOGROTATE" <<'EOF'
+cat <<'EOF' | $SUDO tee "$HOURLY_LOGROTATE" >/dev/null
 #!/bin/sh
 /usr/sbin/logrotate /etc/logrotate.conf
 EOF
 
-chmod +x "$HOURLY_LOGROTATE"
+$SUDO chmod +x "$HOURLY_LOGROTATE"
 
 echo "Testing logrotate config..."
 logrotate -d /etc/logrotate.conf >/dev/null
