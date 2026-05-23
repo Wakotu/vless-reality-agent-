@@ -117,9 +117,26 @@ install_missing_deps() {
           *)       ;;
         esac
         echo "==> Retrieving latest sing-box release info..." >&2
-        local latest_tag download_url
-        latest_tag="$(wget -qO- --timeout=15 --tries=2 "https://api.github.com/repos/SagNet/sing-box/releases/latest" | jq -r '.tag_name')"
-        download_url="https://github.com/SagNet/sing-box/releases/download/${latest_tag}/sing-box-${latest_tag#v}-linux-${arch}.tar.gz"
+        local latest_tag download_url repo api_url release_json
+        repo="SagerNet/sing-box"
+        api_url="https://api.github.com/repos/${repo}/releases/latest"
+
+        if ! release_json="$(wget -O- --timeout=15 --tries=2 "$api_url")"; then
+          echo "Error: failed to retrieve latest sing-box release info from GitHub" >&2
+          echo "Hint: check network connectivity or download sing-box manually:" >&2
+          echo "  https://github.com/${repo}/releases" >&2
+          exit 1
+        fi
+
+        latest_tag="$(jq -r '.tag_name // empty' <<<"$release_json" || true)"
+
+        if [[ -z "$latest_tag" || "$latest_tag" == "null" ]]; then
+          echo "Error: failed to parse sing-box release tag from GitHub response:" >&2
+          jq . <<<"$release_json" >&2
+          exit 1
+        fi
+
+        download_url="https://github.com/${repo}/releases/download/${latest_tag}/sing-box-${latest_tag#v}-linux-${arch}.tar.gz"
         local tmpdir
         tmpdir="$(mktemp -d)"
         echo "==> Downloading sing-box ${latest_tag} for linux/${arch}..." >&2
@@ -160,7 +177,7 @@ install_missing_deps() {
       echo "Please install the following manually:" >&2
       $need_wget && echo "  - wget (https://www.gnu.org/software/wget/)" >&2
       $need_jq && echo "  - jq (https://jqlang.github.io/jq/)" >&2
-      $need_singbox && echo "  - sing-box (https://github.com/SagNet/sing-box/releases)" >&2
+      $need_singbox && echo "  - sing-box (https://github.com/SagerNet/sing-box/releases)" >&2
       exit 1
       ;;
   esac
