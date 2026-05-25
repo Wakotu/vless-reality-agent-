@@ -60,9 +60,9 @@ cp ddns-update.env /usr/local/bin/ddns-update.env
 chmod 600 /usr/local/bin/ddns-update.env
 ```
 
-Then add a cron entry to check every 5 minutes:
+Then add a cron entry to check every minute:
 ```bash
-(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/ddns-update.sh") | crontab -
+(crontab -l 2>/dev/null; echo "* * * * * /usr/local/bin/ddns-update.sh") | crontab -
 ```
 
 State is stored in `/var/lib/ddns-agent/last_ip`.
