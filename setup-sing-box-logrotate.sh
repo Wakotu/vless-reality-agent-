@@ -65,6 +65,7 @@ $LOG_FILE {
     missingok
     notifempty
     copytruncate
+    dateformat -%Y%m%d%H
 }
 EOF
 
