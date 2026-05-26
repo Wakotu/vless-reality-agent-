@@ -3,7 +3,7 @@ set -eu
 
 LOG_FILE="/var/log/sing-box.log"
 LOGROTATE_CONF="/etc/logrotate.d/sing-box"
-SING_BOX_CONFIG="${1:-config.json}"
+SING_BOX_CONFIG="${1:-$(pwd)/config.json}"
 
 if [ -f /etc/os-release ]; then
     . /etc/os-release
