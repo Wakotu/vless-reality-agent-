@@ -17,6 +17,12 @@ case "$OS_ID" in
     *)      HOURLY_LOGROTATE="/etc/cron.hourly/logrotate" ;;
 esac
 
+case "$OS_ID" in
+    alpine) INIT_SCRIPT="/etc/init.d/sing-box" ;;
+    debian|ubuntu) INIT_SCRIPT="/etc/systemd/system/sing-box.service" ;;
+    *) INIT_SCRIPT="" ;;
+esac
+
 if [ "$(id -u)" -eq 0 ]; then
     SUDO=""
 else
@@ -81,9 +87,51 @@ echo "Testing logrotate config..."
 logrotate -d /etc/logrotate.conf >/dev/null
 
 
-echo "Starting sing-box with:"
-echo "nohup sing-box run -c \"$SING_BOX_CONFIG\" >$LOG_FILE 2>&1 &"
-nohup sing-box run -c "$SING_BOX_CONFIG" >"$LOG_FILE" 2>&1 &
+echo "Installing sing-box system service..."
+case "$OS_ID" in
+    alpine)
+        cat <<EOF | $SUDO tee "$INIT_SCRIPT" >/dev/null
+#!/sbin/openrc-run
+supervisor="supervise-daemon"
+name="sing-box"
+command="/usr/bin/sing-box"
+command_args="run -c $SING_BOX_CONFIG"
+output_log="$LOG_FILE"
+error_log="$LOG_FILE"
+respawn_delay=5
+respawn_max=0
+EOF
+        $SUDO chmod +x "$INIT_SCRIPT"
+        $SUDO rc-update add sing-box default
+        $SUDO rc-service sing-box start
+        ;;
+    debian|ubuntu)
+        cat <<EOF | $SUDO tee "$INIT_SCRIPT" >/dev/null
+[Unit]
+Description=sing-box
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/sing-box run -c $SING_BOX_CONFIG
+StandardOutput=append:$LOG_FILE
+StandardError=append:$LOG_FILE
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=0
+StartLimitBurst=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        $SUDO systemctl daemon-reload
+        $SUDO systemctl enable --now sing-box
+        ;;
+    *)
+        echo "Starting sing-box with:"
+        echo "nohup sing-box run -c \"$SING_BOX_CONFIG\" >$LOG_FILE 2>&1 &"
+        nohup sing-box run -c "$SING_BOX_CONFIG" >"$LOG_FILE" 2>&1 &
+        ;;
+esac
 
 echo
 echo "Setup complete."
