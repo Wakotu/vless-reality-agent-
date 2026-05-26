@@ -88,6 +88,12 @@ logrotate -d /etc/logrotate.conf >/dev/null
 
 
 echo "Installing sing-box system service..."
+
+if pgrep -x sing-box >/dev/null; then
+    echo "sing-box is already running, stopping existing instance..."
+    $SUDO pkill -x sing-box
+fi
+
 case "$OS_ID" in
     alpine)
         cat <<EOF | $SUDO tee "$INIT_SCRIPT" >/dev/null
