@@ -3,7 +3,14 @@ set -eu
 
 LOG_FILE="/var/log/sing-box.log"
 LOGROTATE_CONF="/etc/logrotate.d/sing-box"
-SING_BOX_CONFIG="${1:-$(pwd)/config.json}"
+if [ -n "${1:-}" ]; then
+    case "$1" in
+        /*) SING_BOX_CONFIG="$1" ;;
+        *)  SING_BOX_CONFIG="$(pwd)/$1" ;;
+    esac
+else
+    SING_BOX_CONFIG="$(pwd)/config.json"
+fi
 
 if [ -f /etc/os-release ]; then
     . /etc/os-release
