@@ -62,17 +62,20 @@ install_missing_deps() {
       $need_wget && pkgs+=(wget)
       $need_jq && pkgs+=(jq)
       if [[ ${#pkgs[@]} -gt 0 ]]; then
+        $SUDO apk update || true
         $SUDO apk add "${pkgs[@]}" || {
           echo "Error: failed to install: ${pkgs[*]}" >&2
           exit 1
         }
       fi
       hash -r
-      $need_wget && command -v wget >/dev/null 2>&1 || {
+      $need_wget && { hash -d wget 2>/dev/null; } || true
+      $need_jq && { hash -d jq 2>/dev/null; } || true
+      $need_wget && { command -v wget >/dev/null 2>&1 || test -x /usr/bin/wget; } || {
         echo "Error: wget still not found after install" >&2
         exit 1
       }
-      $need_jq && command -v jq >/dev/null 2>&1 || {
+      $need_jq && { command -v jq >/dev/null 2>&1 || test -x /usr/bin/jq; } || {
         echo "Error: jq still not found after install" >&2
         exit 1
       }
@@ -82,7 +85,8 @@ install_missing_deps() {
           exit 1
         }
         hash -r
-        command -v sing-box >/dev/null 2>&1 || {
+        hash -d sing-box 2>/dev/null || true
+        command -v sing-box >/dev/null 2>&1 || test -x /usr/bin/sing-box || {
           echo "Error: sing-box still not found after install" >&2
           exit 1
         }
