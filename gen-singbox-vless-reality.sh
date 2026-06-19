@@ -69,16 +69,20 @@ install_missing_deps() {
         }
       fi
       hash -r
-      $need_wget && { hash -d wget 2>/dev/null; } || true
-      $need_jq && { hash -d jq 2>/dev/null; } || true
-      $need_wget && { command -v wget >/dev/null 2>&1 || test -x /usr/bin/wget; } || {
-        echo "Error: wget still not found after install" >&2
-        exit 1
-      }
-      $need_jq && { command -v jq >/dev/null 2>&1 || test -x /usr/bin/jq; } || {
-        echo "Error: jq still not found after install" >&2
-        exit 1
-      }
+      if $need_wget; then
+        hash -d wget 2>/dev/null || true
+        command -v wget >/dev/null 2>&1 || test -x /usr/bin/wget || {
+          echo "Error: wget still not found after install" >&2
+          exit 1
+        }
+      fi
+      if $need_jq; then
+        hash -d jq 2>/dev/null || true
+        command -v jq >/dev/null 2>&1 || test -x /usr/bin/jq || {
+          echo "Error: jq still not found after install" >&2
+          exit 1
+        }
+      fi
       if $need_singbox; then
         $SUDO apk add sing-box --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community || {
           echo "Error: failed to install sing-box" >&2
@@ -103,14 +107,18 @@ install_missing_deps() {
           exit 1
         }
         hash -r
-        $need_wget && command -v wget >/dev/null 2>&1 || {
-          echo "Error: wget still not found after install" >&2
-          exit 1
-        }
-        $need_jq && command -v jq >/dev/null 2>&1 || {
-          echo "Error: jq still not found after install" >&2
-          exit 1
-        }
+        if $need_wget; then
+          command -v wget >/dev/null 2>&1 || {
+            echo "Error: wget still not found after install" >&2
+            exit 1
+          }
+        fi
+        if $need_jq; then
+          command -v jq >/dev/null 2>&1 || {
+            echo "Error: jq still not found after install" >&2
+            exit 1
+          }
+        fi
       fi
       if $need_singbox; then
         local arch
